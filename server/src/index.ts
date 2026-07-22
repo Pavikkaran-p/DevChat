@@ -4,6 +4,10 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { config } from "./config/env.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import authRoutes from "./routes/auth.routes.js";
+import roomRoutes from "./routes/room.routes.js";
+import { initializeSocket } from "./socket/index.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -25,6 +29,15 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// ── API routes ─────────────────────────────────────────────────────────
+app.use("/api/auth", authRoutes);
+app.use("/api/rooms", roomRoutes);
+
+// ── Centralized error handler (must be registered last) ────────────────
+app.use(errorHandler);
+
+// ── Socket.io ──────────────────────────────────────────────────────────
+initializeSocket(httpServer);
 
 // ── Start server ───────────────────────────────────────────────────────
 httpServer.listen(config.port, () => {
